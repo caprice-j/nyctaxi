@@ -46,6 +46,15 @@ dodf %>% group_by(t, passenger_count) %>% summarize( n = n() ) %>% group_by(t) %
 dodf %>% mutate( h = hour(pickup_datetime)) %>% ggplot() + geom_density(aes(x=h, color=t)) + scale_x_continuous(breaks=-1:24)
 dodf %>% mutate( h = hour(dropoff_datetime)) %>% ggplot() + geom_density(aes(x=h, color=t)) + scale_x_continuous(breaks=-1:24)
 
+png("EDA/GS-pickup-location.png", width=960, height=960)
+  ggplot(dodf) + geom_histogram(aes(x=tip_amount, fill=t), position='fill') + labs(title='Tip Amount Histogram (n=10,000)')
+dev.off()
+  
+png("EDA/GS-tip-histogram.png", width=960, height=960)
+  # NB: set limit 100,000 
+  ggplot(dodf) + geom_histogram(aes(x=tip_amount, fill=t), position='fill') + labs(title='Tip Amount Histogram (n=100,000)')
+dev.off()
+  
 # Analysis 2. Goldman Sachs Pickup Location
 
 pudf <-
