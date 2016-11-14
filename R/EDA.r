@@ -10,13 +10,11 @@ mydf <- query(" select * from goldman_sachs_dropoffs limit 5000") %>% dplyr::sel
 
 ggplot(mydf) + geom_point(aes(x=dropoff_latitude, y=dropoff_longitude))
 
-mydf %>% mutate( t = ifelse(dropoff_latitude<40.7144, 'STREET', 'GOLDMAN') ) %>% ggplot() + geom_segment(aes(x=pickup_latitude,  xend=dropoff_latitude,
-                                                                                                             y=pickup_longitude, yend=dropoff_longitude, color=t))
 
-murray <- data_frame(lat=c(40.715198, 40.715447), lon=c(-74.013120, -74.015003)) %>% mutate(s=(first(lon)-last(lon)) / (first(lat)-last(lat)), i=lon - lat*s )
-  west <- data_frame(lat=c(40.715273, 40.713930), lon=c(-74.013697, -74.013848)) %>% mutate(s=(first(lon)-last(lon)) / (first(lat)-last(lat)), i=lon - lat*s )
- vesey <- data_frame(lat=c(40.714006, 40.714436), lon=c(-74.014442, -74.015353)) %>% mutate(s=(first(lon)-last(lon)) / (first(lat)-last(lat)), i=lon - lat*s )
- neave <- data_frame(lat=c(40.715806, 40.714845), lon=c(-74.015405, -74.016161)) %>% mutate(s=(first(lon)-last(lon)) / (first(lat)-last(lat)), i=lon - lat*s )
+murray <- data_frame(lat=c(40.715198, 40.715447), lon=c(-74.013120, -74.015003)) %>% mutate(s=(first(lat)-last(lat)) / (first(lon)-last(lon)), i=lat - lon*s )
+  west <- data_frame(lat=c(40.715273, 40.713930), lon=c(-74.013697, -74.013848)) %>% mutate(s=(first(lat)-last(lat)) / (first(lon)-last(lon)), i=lat - lon*s )
+ vesey <- data_frame(lat=c(40.714006, 40.714436), lon=c(-74.014442, -74.015353)) %>% mutate(s=(first(lat)-last(lat)) / (first(lon)-last(lon)), i=lat - lon*s )
+ neave <- data_frame(lat=c(40.715806, 40.714845), lon=c(-74.015405, -74.016161)) %>% mutate(s=(first(lat)-last(lat)) / (first(lon)-last(lon)), i=lat - lon*s )
  
 streets <- list(geom_abline(slope=murray$s[1], intercept=murray$i[1], color="pink",      lwd=3),
                 geom_abline(slope=  west$s[1], intercept=  west$i[1], color="skyblue",   lwd=3),
@@ -25,11 +23,20 @@ streets <- list(geom_abline(slope=murray$s[1], intercept=murray$i[1], color="pin
 
 png("EDA/GS-dropoff-cluster.png", width=960, height=960)
   mydf %>% mutate( t = ifelse(dropoff_latitude<40.7144, 'STREET', 'GOLDMAN') ) %>% ggplot() + 
-  geom_point(aes(x=dropoff_latitude, y=dropoff_longitude, color=t), size=.5) + streets + 
-  ylim(-74.0162, -74.0135) + xlim(40.7138, 40.7156) + 
+  geom_point(aes(x=dropoff_longitude, y=dropoff_latitude, color=t), size=.5) + streets + 
+  xlim(-74.0162, -74.0135) + ylim(40.7138, 40.7156) + 
   labs(title="Goldman Sachs Tower (West 200) Dropoff Location", subtitle="Two clusters: GS Entrance and Street Intersection")
 dev.off()
 
+
+mydf %>% mutate( t = ifelse(dropoff_latitude<40.7144, 'STREET', 'GOLDMAN') ) %>% ggplot() + geom_segment(aes(x=pickup_longitude, xend=dropoff_longitude,
+                                                                                                             y=pickup_latitude,  yend=dropoff_latitude, color=t)) # + streets
+
+maplist$nyc
+
+ggplot() +geom_polygon(data = maplist$mt,
+             aes(x = long, y = lat, group = group),
+             fill = "#080808", color = "#080808") +   geom_point(data=mydf %>% mutate( t = ifelse(dropoff_latitude<40.7144, 'STREET', 'GOLDMAN') ) , aes(x=dropoff_latitude, y=dropoff_longitude, color=t), size=.5) 
 
 qmap("200 West St, New York ")
 
