@@ -23,7 +23,13 @@ streets <- list(geom_abline(slope=murray$s[1], intercept=murray$i[1], color="pin
                 geom_abline(slope= vesey$s[1], intercept= vesey$i[1], color="darkgreen", lwd=3),
                 geom_abline(slope= neave$s[1], intercept= neave$i[1], color="orange",    lwd=3))
 
-mydf %>% mutate( t = ifelse(dropoff_latitude<40.7144, 'STREET', 'GOLDMAN') ) %>% ggplot() + geom_point(aes(x=dropoff_latitude, y=dropoff_longitude, color=t), size=.5) + streets + ylim(-74.0162, -74.0135) + xlim(40.7138, 40.7156)
+png("EDA/GS-dropoff-cluster.png", width=960, height=960)
+  mydf %>% mutate( t = ifelse(dropoff_latitude<40.7144, 'STREET', 'GOLDMAN') ) %>% ggplot() + 
+  geom_point(aes(x=dropoff_latitude, y=dropoff_longitude, color=t), size=.5) + streets + 
+  ylim(-74.0162, -74.0135) + xlim(40.7138, 40.7156) + 
+  labs(title="Goldman Sachs Tower (West 200) Dropoff Location", subtitle="Two clusters: GS Entrance and Street Intersection")
+dev.off()
+
 
 qmap("200 West St, New York ")
 
