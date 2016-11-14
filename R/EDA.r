@@ -52,9 +52,11 @@ dev.off()
   
 png("EDA/GS-tip-histogram.png", width=960, height=960)
   # NB: set limit 100,000 
-  ggplot(dodf) + geom_histogram(aes(x=tip_amount, fill=t), position='fill') + labs(title='Tip Amount Histogram (n=100,000)')
+  ggplot(dodf%>%filter(tip_amount<25)) + geom_histogram(aes(x=tip_amount, fill=t), position='fill') + labs(title='Tip Amount Histogram (n=100,000)')
 dev.off()
   
+ggplot(dodf%>%filter(tip_amount<25)) + geom_histogram(aes(x=tip_amount, fill=t)) + labs(title='Tip Amount Histogram (n=100,000)')
+
 # Analysis 2. Goldman Sachs Pickup Location
 
 pudf <-
