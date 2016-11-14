@@ -34,10 +34,3 @@ VALUES
 
 CREATE INDEX index_custom_geoms ON custom_geometries USING gist (geom);
 
--- CREATE TABLE gs_pickup AS
--- SELECT trips.*
--- FROM trips, custom_geometries
--- WHERE
---   custom_geometries.name = 'Goldman Sachs'
---   AND dropoff_nyct2010_gid = 2100
---   AND ST_Within(pickup, custom_geometries.geom);

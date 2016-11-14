@@ -5,11 +5,15 @@ for(tbl in tables){
   glimpse(dbGetQuery(con, paste("SELECT * FROM", tbl, " LIMIT 10")))
 }
 
+# Analaysis 1: Goldman Sachs Dropoff
 
-mydf <- query(" select * from goldman_sachs_dropoffs limit 5000") %>% dplyr::select(-pickup, -dropoff)
+dodf <- # dropoff data frame
+  query(" select * from goldman_sachs_dropoffs limit 10000") %>%
+  dplyr::select(-pickup, -dropoff) %>%
+  mutate( t = ifelse(dropoff_latitude<40.7144, 'STREET', 'GOLDMAN')) %>%
+  mutate( inMt  = inManhattan(pickup_longitude, pickup_latitude) )
 
-ggplot(mydf) + geom_point(aes(x=dropoff_latitude, y=dropoff_longitude))
-
+ggplot(dodf) + geom_point(aes(x=dropoff_longitude, y=dropoff_latitude)) # NB: logitude should be x for nyc-taxi-data compatibility 
 
 murray <- data_frame(lat=c(40.715198, 40.715447), lon=c(-74.013120, -74.015003)) %>% mutate(s=(first(lat)-last(lat)) / (first(lon)-last(lon)), i=lat - lon*s )
   west <- data_frame(lat=c(40.715273, 40.713930), lon=c(-74.013697, -74.013848)) %>% mutate(s=(first(lat)-last(lat)) / (first(lon)-last(lon)), i=lat - lon*s )
@@ -22,22 +26,40 @@ streets <- list(geom_abline(slope=murray$s[1], intercept=murray$i[1], color="pin
                 geom_abline(slope= neave$s[1], intercept= neave$i[1], color="orange",    lwd=3))
 
 png("EDA/GS-dropoff-cluster.png", width=960, height=960)
-  mydf %>% mutate( t = ifelse(dropoff_latitude<40.7144, 'STREET', 'GOLDMAN') ) %>% ggplot() + 
-  geom_point(aes(x=dropoff_longitude, y=dropoff_latitude, color=t), size=.5) + streets + 
+  ggplot(dodf) + geom_point(aes(x=dropoff_longitude, y=dropoff_latitude, color=t), size=.5, alpha=.8) + streets + 
   xlim(-74.0162, -74.0135) + ylim(40.7138, 40.7156) + 
   labs(title="Goldman Sachs Tower (West 200) Dropoff Location", subtitle="Two clusters: GS Entrance and Street Intersection")
 dev.off()
 
+ggplot() + maplist$mtg  +
+  geom_point(data=dodf, aes(x=pickup_longitude, y=pickup_latitude, color=t), size=.5)
+# => Mostly in Manhattan
 
-mydf %>% mutate( t = ifelse(dropoff_latitude<40.7144, 'STREET', 'GOLDMAN') ) %>% ggplot() + geom_segment(aes(x=pickup_longitude, xend=dropoff_longitude,
-                                                                                                             y=pickup_latitude,  yend=dropoff_latitude, color=t)) # + streets
+png("EDA/GS-pickup-location.png", width=960, height=960)
+  dodf %>% filter( inMt ) %>%
+  ggplot() + maplist$mtg +
+  geom_point(aes(pickup_longitude, pickup_latitude, color=t), size=.4)
+dev.off()
 
-maplist$nyc
+# Analysis 2. Goldman Sachs Pickup Location
 
-ggplot() +geom_polygon(data = maplist$mt,
-             aes(x = long, y = lat, group = group),
-             fill = "#080808", color = "#080808") +   geom_point(data=mydf %>% mutate( t = ifelse(dropoff_latitude<40.7144, 'STREET', 'GOLDMAN') ) , aes(x=dropoff_latitude, y=dropoff_longitude, color=t), size=.5) 
+pudf <-
+  query(" select * from gs_pickup ") %>%
+  dplyr::select(-pickup, -dropoff) %>%
+  mutate( t = ifelse(dropoff_latitude<40.7144, 'STREET', 'GOLDMAN')) %>%
+  mutate( inMt  = inManhattan(dropoff_longitude, dropoff_latitude) )
 
-qmap("200 West St, New York ")
+ggplot(pudf) + geom_point(aes(x=dropoff_longitude, y=dropoff_latitude, color=t), size=.5)
 
- 
+
+png("EDA/GS-pickup-cluster.png", width=960, height=960)
+  ggplot(pudf) + geom_point(aes(x=pickup_longitude, y=pickup_latitude, color=t), size=.5, position=position_jitter(width=.00005, height=.00003), alpha=.4) + streets + 
+  xlim(-74.0162, -74.0135) + ylim(40.7138, 40.7156) + 
+  labs(title="Goldman Sachs Tower (West 200) Pickup Location", subtitle="Two clusters: GS Entrance and Street Intersection")
+dev.off()
+
+png("EDA/GS-pickup-cluster-nojitter.png", width=960, height=960)
+  ggplot(pudf) + geom_point(aes(x=pickup_longitude, y=pickup_latitude, color=t), size=.5, alpha=.4) + streets + 
+  xlim(-74.0162, -74.0135) + ylim(40.7138, 40.7156) + 
+  labs(title="Goldman Sachs Tower (West 200) Pickup Location (n=5000)", subtitle="Two clusters: GS Entrance and Street Intersection")
+dev.off()

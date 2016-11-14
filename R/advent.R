@@ -40,8 +40,20 @@ generateNewYorkMap <- function(
   nyc_map = tracts.map
   ex_staten_island_map = filter(tracts.map, BoroName != "Staten Island")
   manhattan_map = filter(tracts.map, BoroName == "Manhattan")
+  
 
-  return( list(nyc = nyc_map, mt = manhattan_map, ex = ex_staten_island_map) )  
+  return( list(nyc = nyc_map, mt = manhattan_map, ex = ex_staten_island_map,
+               mtg = list(geom_polygon(data = manhattan_map, aes(x = long, y = lat, group = group), fill = "#080808", color = "#080808"))) )  
 }
 
+# function for dplyr
+inManhattan <- function(
+  lonv, latv,
+  predefined=c('manhattan')[1],
+  slope=1, intercept=114.69
+){
+  if (predefined == 'manhattan')
+    return( ifelse(1 * lonv + 114.69 - latv < 0, TRUE, FALSE) )
 
+  return( slope * lonv + intercept - latv < 0, TRUE, FALSE )
+}
