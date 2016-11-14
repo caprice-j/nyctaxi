@@ -15,6 +15,7 @@ init <- function(
   library(maptools)
   library(gpclib)
   library(sp)
+  library(lubridate)
   gpclibPermit() # support for gpclib will be withdrawn from maptools at the next major release
   source("/home/PCUser/nyc-taxi-data/analysis/helpers.R")
   

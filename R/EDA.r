@@ -10,7 +10,7 @@ for(tbl in tables){
 dodf <- # dropoff data frame
   query(" select * from goldman_sachs_dropoffs limit 10000") %>%
   dplyr::select(-pickup, -dropoff) %>%
-  mutate( t = ifelse(dropoff_latitude<40.7144, 'STREET', 'GOLDMAN')) %>%
+  mutate( t = ifelse(dropoff_latitude<40.7144, 'STREET', 'GOLDMAN')) %>% # arbitrary
   mutate( inMt  = inManhattan(pickup_longitude, pickup_latitude) )
 
 ggplot(dodf) + geom_point(aes(x=dropoff_longitude, y=dropoff_latitude)) # NB: logitude should be x for nyc-taxi-data compatibility 
@@ -41,24 +41,23 @@ png("EDA/GS-pickup-location.png", width=960, height=960)
   geom_point(aes(pickup_longitude, pickup_latitude, color=t), size=.4)
 dev.off()
 
+dodf %>% group_by(t, passenger_count) %>% summarize( n = n() ) %>% group_by(t) %>% mutate( perc = round(n/sum(n)*100,1) )
+
+dodf %>% mutate( h = hour(pickup_datetime)) %>% ggplot() + geom_density(aes(x=h, color=t)) + scale_x_continuous(breaks=-1:24)
+dodf %>% mutate( h = hour(dropoff_datetime)) %>% ggplot() + geom_density(aes(x=h, color=t)) + scale_x_continuous(breaks=-1:24)
+
 # Analysis 2. Goldman Sachs Pickup Location
 
 pudf <-
-  query(" select * from gs_pickup ") %>%
+  query(" select * from gs_pickup limit 10000") %>%
   dplyr::select(-pickup, -dropoff) %>%
-  mutate( t = ifelse(dropoff_latitude<40.7144, 'STREET', 'GOLDMAN')) %>%
+  mutate( t = ifelse(pickup_latitude<40.7144, 'STREET', 'GOLDMAN')) %>%
   mutate( inMt  = inManhattan(dropoff_longitude, dropoff_latitude) )
 
+# Two clusters outside of Manhattan: La guardia and JFK airports
 ggplot(pudf) + geom_point(aes(x=dropoff_longitude, y=dropoff_latitude, color=t), size=.5)
 
-
 png("EDA/GS-pickup-cluster.png", width=960, height=960)
-  ggplot(pudf) + geom_point(aes(x=pickup_longitude, y=pickup_latitude, color=t), size=.5, position=position_jitter(width=.00005, height=.00003), alpha=.4) + streets + 
-  xlim(-74.0162, -74.0135) + ylim(40.7138, 40.7156) + 
-  labs(title="Goldman Sachs Tower (West 200) Pickup Location", subtitle="Two clusters: GS Entrance and Street Intersection")
-dev.off()
-
-png("EDA/GS-pickup-cluster-nojitter.png", width=960, height=960)
   ggplot(pudf) + geom_point(aes(x=pickup_longitude, y=pickup_latitude, color=t), size=.5, alpha=.4) + streets + 
   xlim(-74.0162, -74.0135) + ylim(40.7138, 40.7156) + 
   labs(title="Goldman Sachs Tower (West 200) Pickup Location (n=5000)", subtitle="Two clusters: GS Entrance and Street Intersection")
