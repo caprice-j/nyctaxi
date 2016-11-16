@@ -19,6 +19,8 @@ init <- function(
   gpclibPermit() # support for gpclib will be withdrawn from maptools at the next major release
   source("/home/PCUser/nyc-taxi-data/analysis/helpers.R")
   
+  setwd('~/nyctaxi/')
+  
   assign('gcl',
          list(
            root = '/home/PCUser/nyc-taxi-data'
