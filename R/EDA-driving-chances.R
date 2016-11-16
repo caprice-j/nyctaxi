@@ -27,6 +27,61 @@ sort((master %>% mutate( pt = 3600*hour(pt) + 60*minute(pt) + second(pt), len = 
 # save(univ2, file="trips.20160607.all.RData")
 
 load(file = 'data/trips.20160607.all.RData')
+caption <- "Pickup Date: 2016-06-07 00:00:00 - 23:59:59. Data Source: data/trips.20160607.all.RData"
+
+heavy <-
+  univ2 %>%
+  filter(-74.05 < pickup_longitude & pickup_longitude < -73.6 &
+          40.50 < pickup_latitude  & pickup_latitude  < 41) %>% # remove seemingly incorrect records
+  mutate( min = difftime(dropoff_datetime,pickup_datetime,units='mins'),
+          hpay = tip_amount*60/as.numeric(min),
+          isPremium = 12 * tip_amount - hpay < 0 ) %>%
+  filter( payment_type == '1' & 2 < min & min < 120) %>%
+  mutate( h = hour(pickup_datetime), h2 = as.factor(round(h/2,0)),
+          pt = 3600*hour(pickup_datetime) + 60*minute(pickup_datetime) + second(pickup_datetime) ) %>%
+  rename( tip = tip_amount )
+
+png("EDA/20160607-linearModel.png", width=1920, height=1920)
+  lmed <- lm( hpay ~ tip, data=heavy )
+  ggplot(heavy) + geom_point(aes(x=tip,y=hpay), alpha=.2, size=1.5) + geom_abline(intercept=lmed$coefficients[1], slope=lmed$coefficients[2], color='red') + labs(title='Linear Model on Scatterplot', caption=caption, x='Tip Amount ($)', y='Hourly Pay [$]') + theme_bw() + scale_y_continuous(breaks=seq(0,3000,by=50))
+dev.off()
+
+png("EDA/20160607-linearModel-Premium.png", width=1920, height=1920)
+  ggplot(heavy[!premiumv,]) + geom_point(aes(x=tip,y=hpay), alpha=.2, size=1.5) + geom_point(aes(x=tip,y=hpay), data=heavy[premiumv,], alpha=1, size=1.5, color="red") + geom_abline(intercept=lmed$coefficients[1], slope=lmed$coefficients[2], color='red') + labs(title='Linear Model on Scatterplot', subtitle = 'Pickup Date: 2016-06-07 00:00:00 - 23:59:59', x='Tip Amount ($)', y='Hourly Pay [$]') + theme_bw() + scale_y_continuous(breaks=seq(0,3000,by=50))
+dev.off()
+
+sum(heavy[  premiumv, ]$tip)
+sum(heavy[! premiumv, ]$tip)
+
+# pixelize <- function(v,prec=3,mod=2) {
+#   tmp <- round(v, digits = prec)
+#   tmp + round( (mod - ( as.integer(tmp * 10^prec) %% mod )) / 10^prec, digits=prec)
+# }
+# prc <- 4
+# md <- 2
+#heavy %>% mutate( po = pixelize(pickup_longitude,prec=prc, mod=md), pa = pixelize(pickup_latitude,prec=prc, mod=md) ) %>% group_by(po, pa) %>% filter( n() > 10 ) %>% summarize( wellPaid = sum(isPremium) / n() ) %>% ggplot() + geom_rect(aes(xmin=po, ymin=pa, xmax=po+md*10^(-prc), ymax=pa+md*10^(-prc), fill=wellPaid)) + labs(title="The well-paid area map", caption=caption)
+
+png("EDA/20160607-linearModel-Premium.png", width=1920, height=1920)
+  ggplot(heavy[! premiumv, ]) +
+  geom_point(aes(x=pickup_longitude, y=pickup_latitude), size=.5) +
+  geom_point(aes(x=pickup_longitude, y=pickup_latitude), size=.3, data=heavy[premiumv, ], color="red") + labs(title='Linear Model on Scatterplot', subtitle = 'Pickup Date: 2016-06-07 00:00:00 - 23:59:59', x='Tip Amount ($)', y='Hourly Pay [$]') + theme_bw()
+dev.off()
+  
+png("EDA/20160607-wellpaid-area.png", width=1920, height=1920)
+  heavy %>% mutate( po = round(pickup_longitude,3), pa = round(pickup_latitude,3) ) %>% group_by(po, pa) %>%
+    filter( n() > 10 ) %>% summarize( wellPaid = sum(isPremium) / n() ) %>%
+    ggplot() + geom_rect(aes(xmin=po, ymin=pa, xmax=po+.002, ymax=pa+.002, fill=wellPaid)) + labs(title="The well-paid area map", caption=caption)
+dev.off()
+
+png("EDA/20160607-wellpaid-area-category.png", width=1920, height=1920)
+heavy %>% mutate( po = round(pickup_longitude,3), pa = round(pickup_latitude,3) ) %>% group_by(po, pa) %>%
+  filter( n() > 10 ) %>% summarize( wellPaid = sum(isPremium) / n() ) %>%
+  ggplot() + geom_rect(aes(xmin=po, ymin=pa, xmax=po+.002, ymax=pa+.002, fill=cut(wellPaid,4, labels=c('very few (<.13)', 'few (<.26)', 'much ( <.53)', 'abundant (> .53)')) )) + labs(title="The well-paid area map (threashold: n() < 10 for each rect)", caption=caption) + scale_fill_grey(guide = guide_legend(title = "Ratio of Higher Hourly Pay"), start=0.9, end=0.2 ) + theme_bw()
+dev.off()
+
+  
+# residual analysis
+premium <- heavy %>% filter(  )
 
 master <- univ2 %>% mutate( min = difftime(dropoff_datetime,pickup_datetime,units='mins') ) %>% filter( payment_type == '1' & 2 < min & min < 120) %>% sample_n( size = 30000 ) %>% mutate( h = hour(pickup_datetime), h2 = as.factor(round(h/2,0)), pt = 3600*hour(pickup_datetime) + 60*minute(pickup_datetime) + second(pickup_datetime) ) %>% rename( tip = tip_amount )
 
