@@ -83,7 +83,7 @@ png("EDA/20160607-wellpaid-area-category.png", width=1920, height=1920)
   geom_rect(aes(xmin=po, ymin=pa, xmax=po+.001, ymax=pa+.001,
                 fill=cut(wellPaid,4, labels=c('very few (<.13)', 'few (<.26)', 'much ( <.53)', 'abundant (> .53)')) )) +
   labs(title="The well-paid area map (threashold: n() < 10 for each rect)", caption=caption) +
-  scale_fill_grey(guide = guide_legend(title = "Ratio of Higher Hourly Pay"), start=0.9, end=0.2 ) + theme_bw()
+  scale_fill_grey(guide = guide_legend(title = "Ratio of Higher Hourly Pay"), start=0.9, end=0.2 ) + theme_bw() + theme(legend.position = "bottom")
 dev.off()
 
 
@@ -103,8 +103,37 @@ heavy_cash <-
 
 heavy_cash %>% mutate( po = round(pickup_longitude,3), pa = round(pickup_latitude,3) ) %>% group_by(po, pa) %>%
   filter( n() > 10 ) %>% summarize( cash = sum(payment_type==2) / n() ) %>%
-  ggplot() + geom_rect(aes(xmin=po, ymin=pa, xmax=po+.001, ymax=pa+.001, fill=cut(cash,4, labels=c('very few (<.13)', 'few (<.26)', 'much ( <.53)', 'abundant (> .53)')) )) + labs(title="The cash-paid area map (threashold: n() < 10 for each rect)", caption=caption) + scale_fill_grey(guide = guide_legend(title = "Ratio of Cash Payment"), start=0.9, end=0.2 ) + theme_bw()
+  ggplot() + geom_rect(aes(xmin=po, ymin=pa, xmax=po+.001, ymax=pa+.001, fill=cut(cash,4, labels=c('very few (<.13)', 'few (<.26)', 'much ( <.53)', 'abundant (> .53)')) )) + labs(title="The cash-paid area map (threashold: n() < 10 for each rect)", caption=caption) + scale_fill_grey(guide = guide_legend(title = "Ratio of Cash Payment"), start=0.9, end=0.2 ) + theme_bw() + theme(legend.position = "bottom")
 rm(heavy_cash)
+dev.off()
+
+#pixelized %>% filter( wellPaid >= .5)
+# Source: local data frame [12 x 3]
+# Groups: po [12]
+# 
+# po     pa  wellPaid
+# <dbl>  <dbl>     <dbl>
+# 1  -74.016 40.718 0.5000000
+# 2  -74.006 40.716 0.5000000
+# 3  -74.001 40.750 0.5000000
+# 4  -73.996 40.728 0.5000000
+# 5  -73.990 40.766 0.5000000
+# 6  -73.984 40.664 0.5000000
+# 7  -73.958 40.609 0.6666667
+# 8  -73.954 40.783 0.5000000
+# 9  -73.951 40.743 0.5555556
+# 10 -73.947 40.782 0.5000000
+# 11 -73.941 40.788 0.5000000
+# 12 -73.896 40.746 0.5000000
+# => Google My Map
+# http://www.relatedrentals.com/apartment-rentals/new-york-city/tribeca-battery-park-city/tribeca-tower/available-apartments/1-bedroom-1-bath-24037
+
+heavy %>% filter( round(pickup_latitude,3) == 40.716 & round(pickup_longitude,3) == -74.006 ) %>% select(pickup_latitude, pickup_longitude)
+heavy %>% filter( round(pickup_latitude,3) == 40.716 & round(pickup_longitude,3) == -74.006 ) %>% ggplot() + geom_segment(aes(x=pickup_longitude,xend=dropoff_longitude,y=pickup_latitude,yend=pickup_longitude))
+
+#heavy %>% mutate( perc = total_amount / tip ) %>% ggplot() + geom_point(aes(x=pickup_longitude, y=perc))
+png("EDA/20160607-tip-ratio.png", width=960, height=960)
+  heavy %>% mutate( tip_ratio =  tip / total_amount ) %>% ggplot() + geom_point(aes(x=total_amount, y=tip_ratio), alpha=.7) + scale_y_continuous(breaks=seq(0,1,by=.05))
 dev.off()
 
 # residual analysis
