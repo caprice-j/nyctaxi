@@ -41,6 +41,7 @@ heavy <-
           pt = 3600*hour(pickup_datetime) + 60*minute(pickup_datetime) + second(pickup_datetime) ) %>%
   rename( tip = tip_amount )
 
+
 png("EDA/20160607-linearModel.png", width=1920, height=1920)
   lmed <- lm( hpay ~ tip, data=heavy )
   ggplot(heavy) + geom_point(aes(x=tip,y=hpay), alpha=.2, size=1.5) + geom_abline(intercept=lmed$coefficients[1], slope=lmed$coefficients[2], color='red') + labs(title='Linear Model on Scatterplot', caption=caption, x='Tip Amount ($)', y='Hourly Pay [$]') + theme_bw() + scale_y_continuous(breaks=seq(0,3000,by=50))
@@ -79,7 +80,26 @@ heavy %>% mutate( po = round(pickup_longitude,3), pa = round(pickup_latitude,3) 
   ggplot() + geom_rect(aes(xmin=po, ymin=pa, xmax=po+.002, ymax=pa+.002, fill=cut(wellPaid,4, labels=c('very few (<.13)', 'few (<.26)', 'much ( <.53)', 'abundant (> .53)')) )) + labs(title="The well-paid area map (threashold: n() < 10 for each rect)", caption=caption) + scale_fill_grey(guide = guide_legend(title = "Ratio of Higher Hourly Pay"), start=0.9, end=0.2 ) + theme_bw()
 dev.off()
 
-  
+
+png("EDA/20160607-cash-paid-area.png", width=1920, height=1920)
+
+heavy_cash <-
+  univ2 %>%
+  filter(-74.05 < pickup_longitude & pickup_longitude < -73.6 &
+           40.50 < pickup_latitude  & pickup_latitude  < 41) %>% # remove seemingly incorrect records
+  mutate( min = difftime(dropoff_datetime,pickup_datetime,units='mins'),
+          hpay = tip_amount*60/as.numeric(min),
+          isPremium = 12 * tip_amount - hpay < 0 ) %>%
+  filter(                     2 < min & min < 120) %>%
+  mutate( h = hour(pickup_datetime), h2 = as.factor(round(h/2,0)),
+          pt = 3600*hour(pickup_datetime) + 60*minute(pickup_datetime) + second(pickup_datetime) ) %>%
+  rename( tip = tip_amount )
+
+heavy_cash %>% mutate( po = round(pickup_longitude,3), pa = round(pickup_latitude,3) ) %>% group_by(po, pa) %>%
+  filter( n() > 10 ) %>% summarize( cash = sum(payment_type==2) / n() ) %>%
+  ggplot() + geom_rect(aes(xmin=po, ymin=pa, xmax=po+.002, ymax=pa+.002, fill=cut(cash,4, labels=c('very few (<.13)', 'few (<.26)', 'much ( <.53)', 'abundant (> .53)')) )) + labs(title="The cash-paid area map (threashold: n() < 10 for each rect)", caption=caption) + scale_fill_grey(guide = guide_legend(title = "Ratio of Cash Payment"), start=0.9, end=0.2 ) + theme_bw()
+dev.off()
+
 # residual analysis
 premium <- heavy %>% filter(  )
 
