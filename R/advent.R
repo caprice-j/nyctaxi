@@ -60,3 +60,11 @@ inManhattan <- function(
 
   return( slope * lonv + intercept - latv < 0, TRUE, FALSE )
 }
+
+isHigh <- function(ratiov) {
+  return(
+    ( .19999 < ratiov & ratiov < .20001) |
+      ( .24999 < ratiov & ratiov < .25001) |
+      ( .29999 < ratiov & ratiov < .30001)
+  )
+}
