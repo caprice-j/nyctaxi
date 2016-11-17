@@ -17,11 +17,17 @@ init <- function(
   library(sp)
   library(lubridate)
   gpclibPermit() # support for gpclib will be withdrawn from maptools at the next major release
-  source("/home/PCUser/nyc-taxi-data/analysis/helpers.R")
+  if ( Sys.info()['sysname'] == 'Darwin' ){
+      #source("/Users/PCUser/Dropbox/CU2016/F16CLASSES/BIG_Ching_Yang_Lin/nyc")
+      rootDir <- '/Users/PCUser/Dropbox/CU2016/F16CLASSES/BIG_Ching_Yang_Lin/nyctaxi'
+  } else {
+      source("/home/PCUser/nyc-taxi-data/analysis/helpers.R")
+      rootDir <- '/home/PCUser/nyc-taxi-data'
+  }
   
   assign('gcl',
          list(
-           root = '/home/PCUser/nyc-taxi-data'
+           root = rootDir
          ), envir = .GlobalEnv)
   return(setwd(gcl$root))
 }
