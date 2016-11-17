@@ -136,6 +136,14 @@ png("EDA/20160607-tip-ratio.png", width=960, height=960)
   heavy %>% mutate( tip_ratio =  tip / total_amount ) %>% ggplot() + geom_point(aes(x=total_amount, y=tip_ratio), alpha=.7) + scale_y_continuous(breaks=seq(0,1,by=.05))
 dev.off()
 
+
+png("EDA/20160607-tip-ratio-enlarged.png", width=960, height=960)
+  load('R/trips.20160613_19.all.RData')
+  tmp<- univWeek %>% filter( 0.1666 < tip_amount / total_amount & tip_amount / total_amount < 0.1667 )
+  ggplot(tmp) + geom_point(aes(x=total_amount, y=tip_amount/total_amount)) + scale_y_continuous(breaks=seq(0.1666,0.1667,by=.00001))
+  sort(table(tmp$tip_amount / tmp$total_amount),decreasing = TRUE)[1]
+dev.off()
+  
 # residual analysis
 
 master <- univ2 %>% mutate( min = difftime(dropoff_datetime,pickup_datetime,units='mins') ) %>% filter( payment_type == '1' & 2 < min & min < 120) %>% sample_n( size = 30000 ) %>% mutate( h = hour(pickup_datetime), h2 = as.factor(round(h/2,0)), pt = 3600*hour(pickup_datetime) + 60*minute(pickup_datetime) + second(pickup_datetime) ) %>% rename( tip = tip_amount )
