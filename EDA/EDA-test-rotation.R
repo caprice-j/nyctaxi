@@ -93,14 +93,15 @@ rmse(tiny$pred_raw[decent], tiny$tip_amount[decent])
 #roundYlim <- c(-10.889, -10.73)
 png("EDA/univWeek-raw-xy.png", width=640, height=1280)
     plot(tiny$px , tiny$py , pch=18, xlab="", ylab="")
-    text(-83.767, -10.89, paste0("Decision Tree rpart( tip ~ x + y )\nRMSE = ",rmse(tiny$pred_raw, tiny$tip_amount)), cex=2)
+
 dev.off()
 
 png("EDA/univWeek-rounded-xy.png", width=640, height=1280)
     plot(tiny$px3, tiny$py3, pch=18, xlab="", ylab="")
-    text(-83.767, -10.89, paste0("Decision Tree rpart( tip ~ x + y )\nRMSE = ",rmse(tiny$pred_xy, tiny$tip_amount)), cex=2)
 dev.off()
 
+paste0("Decision Tree rpart( tip ~ x + y )\nRMSE = ",rmse(tiny$pred_raw, tiny$tip_amount))
+paste0("Decision Tree rpart( tip ~ x + y )\nRMSE = ",rmse(tiny$pred_xy, tiny$tip_amount)) # 6% reduce with the same model
 
 #model_xy$frame %>% filter(var == "<leaf>" & n == 1)
 #model_raw$frame %>% filter(var == "<leaf>" & n == 1)
