@@ -19,19 +19,22 @@ init <- function(
   gpclibPermit() # support for gpclib will be withdrawn from maptools at the next major release
   if ( Sys.info()['sysname'] == 'Darwin' ){
       #source("/Users/PCUser/Dropbox/CU2016/F16CLASSES/BIG_Ching_Yang_Lin/nyc")
+       libDir <- '/Users/PCUser/Dropbox/CU2016/F16CLASSES/BIG_Ching_Yang_Lin/nyc-taxi-data'
       rootDir <- '/Users/PCUser/Dropbox/CU2016/F16CLASSES/BIG_Ching_Yang_Lin/nyctaxi'
   } else {
       source("/home/PCUser/nyc-taxi-data/analysis/helpers.R")
-      rootDir <- '/home/PCUser/nyc-taxi-data'
+       libDir <- '/home/PCUser/nyc-taxi-data'
+      rootDir <- '~/nyctaxi'
   }
-  
-  setwd('~/nyctaxi/')
+
   
   assign('gcl',
          list(
-           root = rootDir
+           lib = libDir,
+           root = rootDir,
+           trips20160613_19allRData = paste0(rootDir,'/data/trips.20160613_19.all.RData')
          ), envir = .GlobalEnv)
-  return(setwd(gcl$root))
+  return(setwd(gcl$lib))
 }
 
 generateNewYorkMap <- function(
