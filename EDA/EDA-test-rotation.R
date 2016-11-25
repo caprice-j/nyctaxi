@@ -160,5 +160,46 @@ plot(valid$px, valid$py, pch=18, xlab="", ylab="", cex=.6,
 
 }
 
+library(ranger)
+
+rangered <- ranger(data = tiny[1:1000, c('px', 'py', 'tip_amount')], num.trees = 100, write.forest = FALSE, save.memory = FALSE, dependent.variable.name = "tip_amount")
+
+rangered <- ranger(data = tiny[1:1000, c('pickup_longitude', 'pickup_latitude', 'tip_amount')], num.trees = 1000, write.forest = FALSE, save.memory = FALSE, dependent.variable.name = "tip_amount")
+
+library(randomForest)
+
+rf <- randomForest(tiny[1:1000, c('pickup_longitude', 'pickup_latitude', 'trip_distance')], tiny[1:1000, c('tip_amount')], ntree = 1000)
+
+tr <- tiny[   1:1000, c('pickup_longitude', 'pickup_latitude')]
+te <- tiny[1001:2000, c('pickup_longitude', 'pickup_latitude')]
+y <- tiny$tip_amount[1:1000]
+reged <- FNN::knn.reg(tr,te,y,k=5, algorithm=c("kd_tree", "cover_tree", "brute")[3])
+mean((reged$pred - y)^2)
+
+tr <- tiny[   1:1000, c('px', 'py')]
+te <- tiny[1001:2000, c('px', 'py')]
+y <- tiny$tip_amount[1:1000]
+reged <- FNN::knn.reg(tr,te,y,k=5, algorithm=c("kd_tree", "cover_tree", "brute")[3])
+mean((reged$pred - y)^2)
+
+library(kknn)
+
+k2 <- train.kknn( tip_amount ~ px + py, data = tiny[1:1000, ], distance = 2 )
+k1 <- train.kknn( tip_amount ~ pickup_longitude + pickup_latitude, data = tiny[1:1000, ], distance=1 )
+
+tr <- tiny[1:50000,]
+te <- tiny[50001:51000,]
+
+kknned <- kknn( tip_amount ~ pickup_longitude + pickup_latitude, train=tr, test=te, distance = 1, k=11)
+mean((te$tip_amount - kknned$fitted.values)^2)
+kknned <- kknn( tip_amount ~ pickup_longitude + pickup_latitude, train=tr, test=te, distance = 2, k=11)
+mean((te$tip_amount - kknned$fitted.values)^2)
+
+kknned <- kknn( tip_amount ~ px + py, train=tr, test=te, distance = 1, k=11)
+mean((te$tip_amount - kknned$fitted.values)^2)
+kknned <- kknn( tip_amount ~ px + py, train=tr, test=te, distance = 2, k=11)
+mean((te$tip_amount - kknned$fitted.values)^2)
+
+
 #library(plotly)
 #plot_ly(tiny, x = ~ x, y = ~ y )
