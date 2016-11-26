@@ -36,10 +36,16 @@ huge <- canTrans %>%
             h = hour(pickup_datetime), h2 = floor(h/2), h3 = floor(h/3), wday = wday(pickup_datetime, label=TRUE),
             rate = tip_amount / (total_amount - tip_amount),
             rateType = isConstant(rate), isCons = ifelse(rateType=='other', FALSE, TRUE),
-            px3 = round(px,3), py3 = round(py,3),
-            px4 = round(px,4), py4 = round(py,4)
+            px4 = ceiling(px) - ceiling(px)%%250, py4 = ceiling(py) - ceiling(py)%%250,
+            px3 = ceiling(px) - ceiling(px)%%100, py3 = ceiling(py) - ceiling(py)%%100,
+            px2 = ceiling(px) - ceiling(px)%%50 , py2 =  ceiling(py) - ceiling(py)%%50,
+            min = difftime(dropoff_datetime,pickup_datetime,units='mins'),
+            hpay = tip_amount*60/as.numeric(min), isHigh = as.numeric(hpay >= 12)
     ) %>% 
     filter( inMt & -74.1 < pickup_longitude & pickup_longitude < -73.925  ) %>%
     filter( -7000 < px & px < 5000 & 0 < py & py < 700000 ) %>%
+    filter( 0 < min & min < 120 ) %>%
     filter( payment_type == 1 ) %>%
     sample_n(3000000)
+
+huge <- huge %>% left_join(., huge %>% group_by(px4,py4) %>% summarize( n=n(), consRate = sum(isCons)/n ), by=c('px4','py4'))

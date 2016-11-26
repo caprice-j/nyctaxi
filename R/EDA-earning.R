@@ -56,3 +56,42 @@ ggmap(maped) + geom_point(aes(pickup_longitude, pickup_latitude), data = huge %>
 
 nyc <- get_map(c(-73.98, 40.76076), source = c('google', 'osm', 'stamen', 'cloudmade')[1], zoom=14)
 ggmap(nyc) + geom_point(aes(pickup_longitude,pickup_latitude), data=huge%>%filter(inTS)%>%sample_n(1000))
+
+
+png("EDA/univWeek-constantRate-hpay.png", width=960, height=960)
+    ggplot(mini%>%filter(hpay<80)) + geom_point(aes(x=tip_amount,y=hpay,color=rateType)) + facet_wrap(  ~ rateType )
+dev.off()
+
+ggplot(mini%>%filter(hpay<80)) + geom_point(aes(x=tip_amount,y=hpay,color=rateType,shape=rateType)) + facet_grid( cut(hpay,6) ~ .)  
+
+huge %>% group_by(rateType) %>% summarise_each(funs(min,max,mean), hpay)
+# rateType         min   max     mean   median
+# (chr)       (dbl) (dbl)    (dbl)    (dbl)
+# 1      20% -15.3236152 28800 14.60732 12.00000
+# 2      25%   0.6411699 23760 19.09469 14.97453
+# 3      30%   1.3485468 23148 23.86606 18.63035
+# 4    other -75.7894737 72000 16.76719 10.51282
+# 5       NA   0.0000000     0  0.00000  0.00000
+
+with(mini %>% filter(rate < 1), plot(tip_amount, rate, col=as.factor(isHigh), pch=18))
+
+library(ranger)
+ed <- ranger(data = cbind(model.matrix( ~ vendor_id + pickup_longitude + pickup_latitude , mini), as.matrix(data.frame(isHigh=mini$isHigh))), dependent.variable.name = "isHigh", classification = TRUE, save.memory = FALSE, num.trees = 3000)
+train(isHigh~vendor_id, data=mini, method="glm", family=binomial, trControl=trainControl("cv", 5, savePredictions=TRUE))
+
+summary(glm( isHigh ~ consRate, data = mini ))
+
+preped <- huge %>% group_by(px4,py4) %>% summarise( highRate= sum(isHigh)/ n(), n = n() )
+
+sz <- 125
+
+mylab <- labs(title="Area with hpay>=12 trip records exceeding the half")
+png("EDA/univWeek-hpayOver12-grid.png", width=960, height=1920)
+    ggplot(preped %>% filter( n > 100 ) ) + geom_rect(aes(xmin=px4-sz, ymin=py4-sz,
+                                                          xmax=px4+sz, ymax=py4+sz,fill=highRate)) + mylab
+dev.off()
+
+png("EDA/univWeek-hpayOver12-twoColor.png", width=960, height=1920)
+ggplot(preped %>% filter( n > 100 ) ) + geom_rect(aes(xmin=px4-sz, ymin=py4-sz,
+                                                      xmax=px4+sz, ymax=py4+sz,fill=as.numeric(highRate>=.5))) + mylab + scale_fill_continuous(guide =guide_legend(title="highRate"))
+dev.off()
