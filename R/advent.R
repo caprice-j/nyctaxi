@@ -70,10 +70,20 @@ inManhattan <- function(
   return( slope * lonv + intercept - latv < 0, TRUE, FALSE )
 }
 
-isHigh <- function(ratiov) {
+isConstant <- function(ratiov) {
   return(
-    ( .19999 < ratiov & ratiov < .20001) |
-      ( .24999 < ratiov & ratiov < .25001) |
-      ( .29999 < ratiov & ratiov < .30001)
+      ifelse(( .19999 < ratiov & ratiov < .20001),
+             "20%",
+             ifelse(( .24999 < ratiov & ratiov < .25001),
+                    "25%",
+                    ifelse(( .29999 < ratiov & ratiov < .30001),
+                           "30%",
+                           "other")))
   )
 }
+
+latlon2meter <- function(lon, lat)
+    spTransform(SpatialPoints(cbind(lon,lat), proj4string=CRS("+ellps=WGS84 +datum=WGS84 +proj=longlat")),
+                CRS("+init=epsg:2908"))
+rotateManhattanY <- function(latm, lonm, theta)  cos(theta) * latm  - sin(theta) * lonm
+rotateManhattanX <- function(latm, lonm, theta)  sin(theta) * latm  + cos(theta) * lonm
