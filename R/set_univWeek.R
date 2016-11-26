@@ -34,6 +34,7 @@ huge <- canTrans %>%
             py = rotateManhattanY(pam,pom,EPSG2908$theta), px = rotateManhattanX(pam,pom,EPSG2908$theta),
             dy = rotateManhattanY(pam,pom,EPSG2908$theta), dx = rotateManhattanX(pam,pom,EPSG2908$theta),
             h = hour(pickup_datetime), h2 = floor(h/2), h3 = floor(h/3), wday = wday(pickup_datetime, label=TRUE),
+            isWeekday = ifelse(wday %in% c('Sat','Sun'),0,1),
             rate = tip_amount / (total_amount - tip_amount),
             rateType = isConstant(rate), isCons = ifelse(rateType=='other', FALSE, TRUE),
             px4 = ceiling(px) - ceiling(px)%%250, py4 = ceiling(py) - ceiling(py)%%250,
@@ -41,8 +42,11 @@ huge <- canTrans %>%
             px2 = ceiling(px) - ceiling(px)%%50 , py2 =  ceiling(py) - ceiling(py)%%50,
             min = difftime(dropoff_datetime,pickup_datetime,units='mins'),
             hpay = tip_amount*60/as.numeric(min), isHigh = as.numeric(hpay >= 12)
+            pid = as.factor(pickup_nyct2010_gid),
+            rid = as.factor(rate_code_id)
     ) %>% 
     filter( inMt & -74.1 < pickup_longitude & pickup_longitude < -73.925  ) %>%
+    filter( fare_amount > 0 & ! is.na(pid) ) %>% # troublesome for calculating rate
     filter( -7000 < px & px < 5000 & 0 < py & py < 700000 ) %>%
     filter( 0 < min & min < 120 ) %>%
     filter( payment_type == 1 ) %>%
