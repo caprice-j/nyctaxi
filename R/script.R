@@ -27,7 +27,7 @@ s20161117 <- function(){
     rename( tip = tip_amount ) %>%
     mutate( isHigh = isHigh(rate), po = round(pickup_longitude,3), pa = round(pickup_latitude,3) ) %>%
     group_by(po, pa) %>%
-    mutate( n = n(), wellPaid = sum(isHigh)/ n, wday = wday(pickup_datetime) ) %>%
+    mutate( n = n(), wellPaid = sum(isHigh)/ n, wday = wday(pickup_datetime) ) 
  
     paired <-
     heavy %>% dplyr::select(hpay, h, po, pa, wellPaid, wday, rate) %>% sample_frac(.1)
@@ -38,4 +38,21 @@ s20161117 <- function(){
   
   ggplot(rfmaster) + geom_point(aes(x=h,y=wellPaid, color=hpay), position=position_jitter(width=.4))
   with( rfmaster %>% filter(hpay<60), plot(wellPaid, hpay) ) 
+  
+  rfmaster <- heavy %>% dplyr::select(cab_type_id, vendor_id, store_and_fwd_flag, 
+                                      rate_code_id, passenger_count, extra, # pickup_nyct2010_gid,
+                                      h, po, pa, wellPaid, wday, isHigh) %>%
+    mutate( vendor_id = as.numeric(as.factor(vendor_id)) -1 ,
+            store_and_fwd_flag = as.numeric(as.factor(store_and_fwd_flag)) - 1, 
+            isHigh = as.integer(isHigh) ) %>% sample_frac(.1)
+  
+  library(ranger)
+  
+  rangered <- ranger(data = data.frame(rfmaster), num.trees = 300,
+                     mtry = round(sqrt(ncol(rfmaster)),0), min.node.size = 1,
+                     scale.permutation.importance = TRUE, importance = "permutation", write.forest = FALSE,
+                     save.memory = FALSE, dependent.variable.name = 'isHigh', classification = FALSE, seed=1234)
+  
+  tl <- table(rfmaster$isHigh, rangered$predictions > .5)
+  (tl[1][1] + tl[2][0]) / sum(tl)
 }
