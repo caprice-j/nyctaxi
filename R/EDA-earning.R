@@ -110,8 +110,13 @@ ggplot(grouped) + geom_rect(aes(xmin=px4-sz, ymin=py4-sz,
                                 xmax=px4+sz, ymax=py4+sz,fill=cut(highRate,4) )) + mylab + myscale + scale_fill_grey(start = .9, end=.1)
 
 
+png("EDA/univ1month-hpayOver12-grid.png", width=960, height=1920)
+    ggplot(grouped) + geom_rect(aes(xmin=px4-sz, ymin=py4-sz,
+                                    xmax=px4+sz, ymax=py4+sz,fill=highRate)) + mylab + myscale
+dev.off()
 
 png("EDA/univ1month-hpayOver12-twoColor.png", width=960, height=1920)
-    ggplot(grouped ) + geom_rect(aes(xmin=px4-sz, ymin=py4-sz,
-                                     xmax=px4+sz, ymax=py4+sz,fill=hpayType)) + mylab + myscale + scale_fill_manual(values=c('#5DB6F9','#000000'))
+    ggplot(grouped) + geom_rect(aes(xmin=px4-sz, ymin=py4-sz,
+                                     xmax=px4+sz, ymax=py4+sz,fill=hpayType)) +
+        mylab + myscale + scale_fill_manual(values=c('#5DB6F9','#000000'))
 dev.off()
