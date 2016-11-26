@@ -76,10 +76,11 @@ if (FALSE) {
     rotate_ny(huge[1:50000,], -.508)
     rotate_ny(huge[1:10000,], -.632) ; abline(a=-83.90, b=0,col="red")
     abline(v=-83.78,col="red")
-    
-    landmark <- data_frame( name = c('TSQ', '51ST', 'CU'),
-                            lat = c( 40.758855,  40.757002,  40.807933),
-                            lon = c(-73.985134, -73.972018, -73.963741) ) %>% 
+
+    # FIXME origin
+    landmark <- data_frame( name = c('TSQ', '51ST', 'CU', 'Julliard', 'CCircle'),
+                            lat = c( 40.758855,  40.757002,  40.807933,  40.773928,  40.768077),
+                            lon = c(-73.985134, -73.972018, -73.963741, -73.982824, -73.981886) ) %>% 
         mutate( y = cos(theta) * lat - sin(theta) * lon,
                 x = sin(theta) * lat + cos(theta) * lon )
     

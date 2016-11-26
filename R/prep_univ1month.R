@@ -1,23 +1,18 @@
-load(file = 'data/trips.20160613_19.all.RData')
-library(tidyverse)
-library(lubridate)
-library(rgdal)
-
-canTrans <-
-    univWeek %>%
+univ4months <-
+    univ4months %>%
     filter(
-        EPSG2908$lonmin <  pickup_longitude &  pickup_longitude < EPSG2908$lonmax &
-            EPSG2908$lonmin < dropoff_longitude & dropoff_longitude < EPSG2908$lonmax &
-            EPSG2908$latmin <  pickup_latitude  &  pickup_latitude  < EPSG2908$latmax &
-            EPSG2908$latmin < dropoff_latitude  & dropoff_latitude  < EPSG2908$latmax
+            gcl$EPSG2908$lonmin <  pickup_longitude &  pickup_longitude < gcl$EPSG2908$lonmax &
+            gcl$EPSG2908$lonmin < dropoff_longitude & dropoff_longitude < gcl$EPSG2908$lonmax &
+            gcl$EPSG2908$latmin <  pickup_latitude  &  pickup_latitude  < gcl$EPSG2908$latmax &
+            gcl$EPSG2908$latmin < dropoff_latitude  & dropoff_latitude  < gcl$EPSG2908$latmax
     ) # removed 2% rows
 
-pmetered <- latlon2meter(canTrans$pickup_longitude, canTrans$pickup_latitude)
-dmetered <- latlon2meter(canTrans$dropoff_longitude, canTrans$dropoff_latitude)
+pmetered <- latlon2meter(univ4months$pickup_longitude, univ4months$pickup_latitude)
+dmetered <- latlon2meter(univ4months$dropoff_longitude, univ4months$dropoff_latitude)
 
 set.seed(1236)
 
-huge <- canTrans %>%
+univ4months <- univ4months %>%
     mutate( cab_type_id = as.factor(cab_type_id),
             pom = pmetered@coords[,'lon'], # pickup longitude in meter (offsetted)
             pam = pmetered@coords[,'lat'], # pickup latitude in meter  (offsetted)
@@ -43,7 +38,8 @@ huge <- canTrans %>%
     filter( fare_amount > 0 & ! is.na(pid) ) %>% # troublesome for calculating rate
     filter( -7000 < px & px < 5000 & 0 < py & py < 700000 ) %>%
     filter( 0 < min & min < 120 ) %>%
-    filter( payment_type == 1 ) %>%
-    sample_n(3000000)
+    filter( payment_type == 1 )
 
-huge <- huge %>% left_join(., huge %>% group_by(px4,py4) %>% summarize( n=n(), consRate = sum(isCons)/n ), by=c('px4','py4'))
+univ1month <- univ4months
+univ1month <- univ1month %>% filter( 5000 < py4 & py4 < 60000)
+save(univ1month, file = "data/trips.20160501_0531.preped.RData")

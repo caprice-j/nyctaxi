@@ -13,23 +13,6 @@ library(tidyverse)
 library(lubridate)
 set.seed(1236)
 theta <- -.632 # 
-inTimesSquare <- function(px,py) return(-83.775 < px & px < -83.765 & -10.82 < py & py < -10.81)
-in11thAve     <- function(px,py) return(-83.7856 < px & px < -83.78495 )
-huge <- univWeek %>% filter( inMt & -74.1 < pickup_longitude & pickup_longitude < -73.925  ) %>%
-    mutate( py = cos(theta) * pickup_latitude  - sin(theta) * pickup_longitude,
-            px = sin(theta) * pickup_latitude  + cos(theta) * pickup_longitude,
-            dy = cos(theta) * dropoff_latitude - sin(theta) * dropoff_longitude,
-            dx = sin(theta) * dropoff_latitude + cos(theta) * dropoff_longitude,
-            h = hour(pickup_datetime), h2 = floor(h/2), h3 = floor(h/3),
-            day = day(pickup_datetime),
-            min = difftime(dropoff_datetime,pickup_datetime,units='mins'),
-            hpay = tip_amount*60/as.numeric(min),
-            inTS = inTimesSquare(px,py), in11thAve = in11thAve(px,py),
-            px3 = round(px,3), py3 = round(py,3),
-            px4 = round(px,4), py4 = round(py,4)) %>% 
-    filter( -83.79 < px & px < -83.745 & -10.9 < py & py < -10.725 ) %>%
-    filter( payment_type == 1 ) %>%
-    sample_n(3000000)
 
 huge %>% group_by(day) %>% summarize_each(funs(min,mean,median,max), tip_amount, min)
 huge %>% mutate( hfare=as.numeric(min)/fare_amount*60) %>% summarize_each(funs(mean,median,max), tip_amount, min, hfare)
@@ -81,17 +64,54 @@ train(isHigh~vendor_id, data=mini, method="glm", family=binomial, trControl=trai
 
 summary(glm( isHigh ~ consRate, data = mini ))
 
-preped <- huge %>% group_by(px4,py4) %>% summarise( highRate= sum(isHigh)/ n(), n = n() )
+preped <- huge %>% group_by(px4,py4) %>% summarise( highRate= sum(isHigh)/ n(), n = n(), pa = min(pickup_latitude),po = min(pickup_longitude) ) %>% filter( n > 100 )
 
 sz <- 125
 
 mylab <- labs(title="Area with hpay>=12 trip records exceeding the half")
+myscale <-  list(scale_y_continuous(breaks=seq(0,60000,by=1000)), scale_x_continuous(breaks=seq(-7000,5000,by=750)))
 png("EDA/univWeek-hpayOver12-grid.png", width=960, height=1920)
-    ggplot(preped %>% filter( n > 100 ) ) + geom_rect(aes(xmin=px4-sz, ymin=py4-sz,
-                                                          xmax=px4+sz, ymax=py4+sz,fill=highRate)) + mylab
+    ggplot(preped) + geom_rect(aes(xmin=px4-sz, ymin=py4-sz,
+                                                          xmax=px4+sz, ymax=py4+sz,fill=highRate)) + mylab + myscale
 dev.off()
 
 png("EDA/univWeek-hpayOver12-twoColor.png", width=960, height=1920)
-ggplot(preped %>% filter( n > 100 ) ) + geom_rect(aes(xmin=px4-sz, ymin=py4-sz,
-                                                      xmax=px4+sz, ymax=py4+sz,fill=as.numeric(highRate>=.5))) + mylab + scale_fill_continuous(guide =guide_legend(title="highRate"))
+ggplot(preped ) + geom_rect(aes(xmin=px4-sz, ymin=py4-sz,
+                                                      xmax=px4+sz, ymax=py4+sz,fill=as.numeric(highRate>=.5))) + mylab + scale_fill_continuous(guide =guide_legend(title="highRate", reverse=1)) + myscale
+dev.off()
+
+# search upper west side area
+
+# "Upper West Side is bounded on the south by 59th Street, Central Park to the east, and the Hudson River to the west. Its northern boundary is somewhat less obvious. Although it has historically been cited as 110th Street,[5] which fixes the neighborhood alongside Central Park, it is now sometimes (primarily by the real estate industry) considered to be 125th Street, encompassing Morningside Heights" (Wikipedia)
+# Columbus Circle is in 59st street
+
+#     geom_label_repel(aes(x,y,label=name), fill=fillcolor, landmark,
+#point.padding = unit(1, "lines"), fontface = 'bold', color = 'white',
+#max.iter = 100, nudge_x = -200, segment.color = fillcolor,
+#segment.size =1.5)
+
+
+fillcolor <- "#EC365E"
+ggplot(preped %>% filter(34000<py&py<42000&-6500<px&px< -4500)) + geom_rect(aes(xmin=px4-sz, ymin=py4-sz,
+                                                      xmax=px4+sz, ymax=py4+sz,fill=as.numeric(highRate>=.5))) +
+    mylab + scale_fill_continuous(guide =guide_legend(title="highRate")) + myscale
+
+maped <- get_map(c(-73.98193, 40.77825), source = c('google', 'osm', 'stamen', 'cloudmade')[1], zoom=16)
+ggmap(maped) + geom_point(aes(po, pa), data = preped %>% filter(34000<py4&py4<42000& px4 == -6000 )  )
+
+
+
+load(file = "data/trips.20160501_0531.preped.RData")
+
+grouped <- univ1month %>% group_by(px4,py4) %>% summarise( highRate= sum(isHigh)/ n(), n = n(), pa = min(pickup_latitude),po = min(pickup_longitude) ) %>% filter( n >= 200 ) %>% mutate( hpayType = ifelse(highRate>=.5, 'HIGH','OTHER'))
+
+
+ggplot(grouped) + geom_rect(aes(xmin=px4-sz, ymin=py4-sz,
+                                xmax=px4+sz, ymax=py4+sz,fill=cut(highRate,4) )) + mylab + myscale + scale_fill_grey(start = .9, end=.1)
+
+
+
+png("EDA/univ1month-hpayOver12-twoColor.png", width=960, height=1920)
+    ggplot(grouped ) + geom_rect(aes(xmin=px4-sz, ymin=py4-sz,
+                                     xmax=px4+sz, ymax=py4+sz,fill=hpayType)) + mylab + myscale + scale_fill_manual(values=c('#5DB6F9','#000000'))
 dev.off()

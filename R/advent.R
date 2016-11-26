@@ -69,6 +69,9 @@ inManhattan <- function(
 
   return( slope * lonv + intercept - latv < 0, TRUE, FALSE )
 }
+#inTimesSquare <- function(px,py) return(-83.775 < px & px < -83.765 & -10.82 < py & py < -10.81)
+#in11thAve     <- function(px,py) return(-83.7856 < px & px < -83.78495 )
+
 
 isConstant <- function(ratiov) {
   return(
@@ -82,8 +85,26 @@ isConstant <- function(ratiov) {
   )
 }
 
-latlon2meter <- function(lon, lat)
-    spTransform(SpatialPoints(cbind(lon,lat), proj4string=CRS("+ellps=WGS84 +datum=WGS84 +proj=longlat")),
-                CRS("+init=epsg:2908"))
+assign('gcl', # global constant list
+       list(
+           # translation bounds From: http://www.spatialreference.org/ref/epsg/2908/
+           EPSG2908 = list( lonmin = -74.2700, lonmax = -71.7500,
+                             latmin =  40.4700, latmax =  41.3100,
+                             lonoff =   978000, latoff =   190000, # offset for meter (confirmed by "eyeballs")
+                             theta = -.503)
+       ),
+       envir = .GlobalEnv)
+message("ASSIGNED: gcl")
+
+
+latlon2meter <- function(lon, lat) {
+    mysp <- spTransform(SpatialPoints(cbind(lon,lat),
+                                      proj4string=CRS("+ellps=WGS84 +datum=WGS84 +proj=longlat")),
+                        CRS("+init=epsg:2908"))
+    
+    mysp@coords[,'lon'] <- mysp@coords[,'lon'] - EPSG2908$lonoff
+    mysp@coords[,'lat'] <- mysp@coords[,'lat'] - EPSG2908$latoff
+    return( mysp )
+}
 rotateManhattanY <- function(latm, lonm, theta)  cos(theta) * latm  - sin(theta) * lonm
 rotateManhattanX <- function(latm, lonm, theta)  sin(theta) * latm  + cos(theta) * lonm
