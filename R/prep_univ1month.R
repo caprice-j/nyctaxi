@@ -32,7 +32,13 @@ univ4months <- univ4months %>%
             min = difftime(dropoff_datetime,pickup_datetime,units='mins'),
             hpay = tip_amount*60/as.numeric(min), isHigh = as.numeric(hpay >= 12),
             pid = as.factor(pickup_nyct2010_gid),
-            rid = as.factor(rate_code_id)
+            rid = as.factor(rate_code_id),
+            d = day(pickup_datetime), m = minute(pickup_datetime),
+            tm = as.numeric(h)*60+as.numeric(m), isGenerous = ifelse(rateType=="other"&rate>.2,1,0),
+            rateCtg = ifelse(isGenerous,"(20%<)other",rateType) %>% factor,
+            consRate = ifelse(rateCtg=="other","other",ifelse(rateCtg%in%c('20%','25%','30%'),"20/25/30%",">20%")),
+            min = as.numeric(min), wd = ifelse(isWeekday, "Weekday", "Weekend"),
+            timeslot = h2ts(h), ts = gsub(' |\\]|^[ABCDE]|-','',h2ts(h)), tz = h2tz(h)
     ) %>% 
     filter( inMt & -74.1 < pickup_longitude & pickup_longitude < -73.925  ) %>%
     filter( fare_amount > 0 & ! is.na(pid) ) %>% # troublesome for calculating rate

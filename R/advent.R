@@ -72,14 +72,14 @@ inManhattan <- function(
 #inTimesSquare <- function(px,py) return(-83.775 < px & px < -83.765 & -10.82 < py & py < -10.81)
 #in11thAve     <- function(px,py) return(-83.7856 < px & px < -83.78495 )
 
-
 isConstant <- function(ratiov) {
+    # see uws-pred.R for criteria reasoning
   return(
-      ifelse(( .19999 < ratiov & ratiov < .20001),
+      ifelse(( .1975 < ratiov & ratiov < .2025),
              "20%",
-             ifelse(( .24999 < ratiov & ratiov < .25001),
+             ifelse(( .2440 < ratiov & ratiov < .2510),
                     "25%",
-                    ifelse(( .29999 < ratiov & ratiov < .30001),
+                    ifelse(( .2945 < ratiov & ratiov < .30025),
                            "30%",
                            "other")))
   )
@@ -108,3 +108,19 @@ latlon2meter <- function(lon, lat) {
 }
 rotateManhattanY <- function(latm, lonm, theta)  cos(theta) * latm  - sin(theta) * lonm
 rotateManhattanX <- function(latm, lonm, theta)  sin(theta) * latm  + cos(theta) * lonm
+
+inUWS <- function(px2, py2) {
+    return( 32000 < py2 & py2 < 44000 & -7500 < px2 & px2 < -4000 )
+}
+h2ts <- function(h) {
+    return(
+        ifelse( 1<=h & h<= 5,"A] 1 - 5 AM",
+                ifelse( 6<=h & h<=10,"B] 6 - 10 AM",
+                        ifelse(11<=h & h<=14,"C] 11 AM - 2 PM",
+                               ifelse(15<=h & h<=18,"D] 3 - 6 PM",
+                                      ifelse(19<=h & h<=21,"E] 7 - 9 PM","F] 10 PM - 12 AM")))))
+    )
+}
+
+#h2tz <- function(h) ifelse(h<=2 | 18<=h, "NIGHT", ifelse(3<=h & h <=5, "VERYEARLY",ifelse(6<=h&h<=8,"EARLY",ifelse(h<=11, "MORNING",ifelse(12<=h & h<=14,"DAYTIME", "LATEDAY")))))
+h2tz <- function(h) ifelse(h%in%c(22,23,0,1,2),"MIDNIGHT",ifelse(h%in%c(3,4,5),"VERYEARLY",ifelse(h%in%c(6,7,8,9),"MORNING",ifelse(h%in%c(10,11,12),"NOON",ifelse(h%in%c(13,14,15),"EARLYDAY",ifelse(h%in%c(16,17,18),"EVENING","NIGHT"))))))

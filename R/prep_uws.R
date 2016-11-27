@@ -1,25 +1,6 @@
-
-inUWS <- function(px2, py2) {
-    return( 32000 < py2 & py2 < 44000 & -7500 < px2 & px2 < -4000 )
-}
-h2ts <- function(h) {
-    return(
-        ifelse( 1<=h & h<= 5,"A] 1 - 5 AM",
-                ifelse( 6<=h & h<=10,"B] 6 - 10 AM",
-                        ifelse(11<=h & h<=14,"C] 11 AM - 2 PM",
-                               ifelse(15<=h & h<=18,"D] 3 - 6 PM",
-                                      ifelse(19<=h & h<=21,"E] 7 - 9 PM","F] 10 PM - 12 AM")))))
-    )
-}
-h2tz <- function(h) ifelse(h<=3 | 18<=h, "NIGHT", ifelse(4<=h&h<=12, "MORNING","DAYTIME"))
+source('~/Dropbox/CU2016/F16CLASSES/BIG_Ching_Yang_Lin/nyctaxi/R/advent.R', echo=TRUE)
 univUWS <- univ1month %>% filter( inUWS(px2, py2) ) %>%
-    group_by(pickup_datetime, dropoff_datetime) %>% dplyr::slice(1) %>% group_by() %>%
-    mutate( d = day(pickup_datetime), m = minute(pickup_datetime),
-            tm = as.numeric(h)*60+as.numeric(m), isGenerous = ifelse(rateType=="other"&rate>.2,1,0),
-            rateCtg = ifelse(isGenerous,"(20%<)other",rateType) %>% factor,
-            consRate = ifelse(rateCtg=="other","other",ifelse(rateCtg%in%c('20%','25%','30%'),"20/25/30%",">20%")),
-            min = as.numeric(min), wd = ifelse(isWeekday, "Weekday", "Weekend"),
-            timeslot = h2ts(h), ts = gsub(' |\\]|^[ABCDE]|-','',h2ts(h)), tz = h2tz(h) )
+    group_by(pickup_datetime, dropoff_datetime) %>% dplyr::slice(1) %>% group_by()
 
 #master <- univUWS[1:10000, ]
 master <- univUWS %>% sample_n(50000)
