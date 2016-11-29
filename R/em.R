@@ -6,26 +6,27 @@ inMidtown <- function(px, py) {
     )
 }
 
-
-
-
-univ1month <- univ1month %>% mutate( inMid = inMidtown(px,py) )
-master <- univ1month  %>% filter( -7000 < px & px < 3000 & 26000 < py & py < 31000) %>% sample_n(100000)
 dim(inMid)
 
 
+univ1month <- univ1month %>% dplyr::select(-id, -pickup_nyct2010_gid, -dropoff_nyct2010_gid) %>% mutate( inMid = inMidtown(px,py) )
+master <- univ1month  %>% filter( -7000 < px & px < 3000 & 26000 < py & py < 31000) %>% sample_n(100000)
+
+# %>% : pipe function
+# 
 
 
 
 
 
-mini <- univ1month %>% sample_n(10000) %>% mutate( inMidtown = ifelse(inMid==1,"in","out") ) 
-small <- univ1month %>% filter( inMid  == 1 ) %>% sample_n(50000)
-ggplot(mini %>% filter( trip_distance < 25) ) + geom_histogram(aes(trip_distance), binwidth=.3) # 3 modals
-ggplot(mini %>% filter( hpay < 50) ) + geom_histogram(aes(hpay)) # two modals
 
-plot(mini$px,mini$py)
-ggplot(master, aes(x = px, y = py)) + geom_point(aes(color=inMid))
+# mini <- univ1month %>% sample_n(10000) %>% mutate( inMidtown = ifelse(inMid==1,"in","out") ) 
+# small <- univ1month %>% filter( inMid  == 1 ) %>% sample_n(50000)
+# ggplot(mini %>% filter( trip_distance < 25) ) + geom_histogram(aes(trip_distance), binwidth=.3) # 3 modals
+# ggplot(mini %>% filter( hpay < 50) ) + geom_histogram(aes(hpay)) # two modals
+# 
+# plot(mini$px,mini$py)
+# ggplot(master, aes(x = px, y = py)) + geom_point(aes(color=inMid))
 
 # Hmmm
 # scaled <- master %>% mutate( pxs = ((px) - mean(px)) / sd(px),
@@ -37,13 +38,16 @@ ggplot(master, aes(x = px, y = py)) + geom_point(aes(color=inMid))
 
 # gaussian mixture model
 
+ggplot(master) + geom_point(aes(px, py))
+
 mixed <- master %>% filter( -8000 < px & px < -3000 & 26500 < py & py < 27000)
 
 ggplot(mixed) + geom_histogram(aes(px), binwidth=80)
+# http://docs.ggplot2.org/0.9.3.1/geom_histogram.html
 
 library(stats)
 library(mixtools) # https://www.jstatsoft.org/article/view/v032i06
-emed <- normalmixEM(mixed$px, lambda = .5, mu =c (-7000,-6000,-5000,-4000,-3000), sigma = 5)
+emed <- normalmixEM(mixed$px, lambda = .2, mu = c(-7000,-6000,-5000,-4000,-3000), sigma = 5)
 plot(emed, density = TRUE, cex.axis = 1.4, cex.lab = 1.5, cex.main = 1.5, breaks=100,
      main2 = "Membership Density of Avenues", xlab2 = "Rotated x-axis")
 
@@ -76,4 +80,25 @@ gg.mixEM <- function(EM, breaks=50, npoly = 500) {
         theme_bw()
 }
 
-gg.mixEM(emed)
+png("EDA/avenue-membership.png", width=480, height = 480)
+    gg.mixEM(emed)
+dev.off()
+
+
+str(emed)
+
+n_points <- 500
+x       <- seq(min(emed$x),max(emed$x),len=n_points)
+
+tmp    <- data.frame(comp = colnames(emed$posterior),
+                      mu = emed$mu,
+                      sigma = emed$sigma,
+                      lambda = emed$lambda)
+em.df   <- data.frame(x=rep(x,each=nrow(tmp)),tmp)
+em.df$y <- em.df$lambda * dnorm(em.df$x, mean=em.df$mu,sd=em.df$sigma)
+
+ggplot(em.df ) + geom_bar(aes(x=x, y=y, fill=comp), position="fill", stat="identity")
+
+ggplot(em.df %>% filter( -5000 < x & x < -4500  ) ) + geom_bar(aes(x=x, y=y, fill=comp), position="fill", stat="identity")
+
+ggplot(em.df %>% filter( -5000 < x & x < -4500  ) ) + geom_bar(aes(x=x, y=y, fill=comp), position="fill", stat="identity")
