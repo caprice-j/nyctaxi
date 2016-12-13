@@ -65,7 +65,7 @@ dev.off()
 
 ggplot(mixed) + geom_point(aes(px, py), size=.5)
 ggplot(mixed) + geom_histogram(aes(px), binwidth=80)
-ggplot(mixed) + geom_histogram(aes(py), binwidth=10)
+ggplot(mixed) + geom_histogram(aes(py), binwidth=30)
 # http://docs.ggplot2.org/0.9.3.1/geom_histogram.html
 
 library(stats)
@@ -94,7 +94,7 @@ emed$mu
 
 png("EDA/GAUSSIAN-means.png", width = 960, height=960)
 with(master %>% filter(px < -1600) %>% sample_n(100000), plot(px,py, pch=18, cex=.5,
-                                                              main = "Estimated Gaussian Means (after 36 iterations)"))
+                                                              main = "Estimated 14 Gaussian Means (after 36 iterations)"))
 abline(h=emed$mu,col="red",lwd=2)
 dev.off()
 
@@ -103,15 +103,18 @@ abline(h=first_mu, lwd=3, col="blue", lty=2)
 emed$sigma
 
 # credit: http://stackoverflow.com/questions/25313578/any-suggestions-for-how-i-can-plot-mixem-type-data-using-ggplot2
-gg.mixEM <- function(EM, breaks=50, npoly = 500) {
+gg.mixEM <- function(EM, breaks=50, npoly = 500, density=TRUE, bincolor="gray80", cons=NULL) {
     b <- breaks
     require(ggplot2)
     x       <- with(EM,seq(min(x),max(x),len=npoly))
     x_inter <- x[2] - x[1]
     pars    <- with(EM,data.frame(comp=colnames(posterior), mu, sigma,lambda))
     em.df   <- data.frame(x=rep(x,each=nrow(pars)),pars)
-    em.df$y <- with(em.df,lambda*dnorm(x,mean=mu,sd=sigma))
-
+    if (is.null(cons))
+        em.df$y <- with(em.df,lambda*dnorm(x,mean=mu,sd=sigma))
+    else
+        em.df$y <- with(em.df,cons*dnorm(x,mean=mu,sd=sigma))
+    
     em.df <- em.df %>% mutate( y = ifelse((x==min(x)|x==max(x)) & y > 10^-06,0,y))
     
     # tooHighMin <- em.df %>% filter( x == min(x) & y > 10^-06)
@@ -121,17 +124,31 @@ gg.mixEM <- function(EM, breaks=50, npoly = 500) {
     #                    tooHighMin %>% mutate( y = 0, x = x - .1 * sd(x) ),
     #                    tooHighMax %>% mutate( y = 0, x = x + .1 * sd(x) )
     #                    )
-    
-    ggplot(data.frame(x=EM$x),aes(x,y=..density..)) + 
-        geom_histogram(fill=NA,color="black", bins=b)+
-        geom_polygon(data=em.df%>%arrange(x),aes(x,y,fill=comp),color="grey50", alpha=0.5)+
+    p <- ggplot(data.frame(x=EM$x),aes(x,y=..density..)) + 
+        geom_histogram(fill=NA, bins=b, color=bincolor)+
         scale_fill_discrete("Component\nMeans",labels=format(em.df$mu,digits=3))+
         theme_bw()
+    if (density)
+        p + geom_polygon(data=em.df%>%arrange(x),aes(x,y,fill=comp),color="grey50", alpha=0.5)
+    else
+        p
+    
 }
 
-png("EDA/avenue-membership.png", width=480, height = 480)
-    gg.mixEM(emed)
+mytheme <- scale_x_continuous(breaks=seq(26000,31000,by=200))
+
+png("EDA/avenue-membership-nodensity.png", width=960, height = 480)
+    gg.mixEM(emed, density = FALSE, breaks=200, bincolor = "gray40") + mytheme
 dev.off()
+
+png("EDA/avenue-membership.png", width=960, height = 480)
+    gg.mixEM(emed, density = TRUE, breaks=200, bincolor = "gray60") + theme(legend.position="none")  + mytheme
+dev.off()
+
+png("EDA/avenue-membership.png", width=960, height = 480)
+    gg.mixEM(emed, density = TRUE, breaks=200, bincolor = "gray60", cons=.1) + theme(legend.position="none")  + mytheme
+dev.off()
+    
 
 
 str(emed)
