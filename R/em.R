@@ -12,6 +12,8 @@ dim(inMid)
 univ1month <- univ1month %>% dplyr::select(-id, -pickup_nyct2010_gid, -dropoff_nyct2010_gid) %>% mutate( inMid = inMidtown(px,py) )
 master <- univ1month  %>% filter( -7000 < px & px < 3000 & 26000 < py & py < 31000) #%>% sample_n(300000)
 
+
+master2 <- univ1month  %>% filter( -7000 < px & px < 3000 & 26000 < py & py < 32000) %>% sample_n(100000)
 # %>% : pipe function
 # 
 
@@ -55,7 +57,11 @@ ggplot(master %>% filter( 29750 < py & py < 30800 & -2500 < px & px < 0 ) ) + ge
 
 mixed <- master %>% filter( -8000 < px & px < -3000 & 26500 < py & py < 27000)
 mixed <- master %>% filter( 29750 < py & py < 30800 & -2500 < px & px < 0 )
-mixed <- master %>% filter( -2250 < px & px < -1600 & py < 30800 )
+mixed <- master %>% filter( -2250 < px & px < -1600 & 26600 < py & py < 30250  )
+
+png('EDA/GAUSSIAN-area.png', height=1440, width=1440)
+ggplot(master2,aes(px,py)) + geom_point(size=.3, color="black", alpha=.9) + geom_point(data=mixed, color="blue", size=.1, alpha=.5)
+dev.off()
 
 ggplot(mixed) + geom_point(aes(px, py), size=.5)
 ggplot(mixed) + geom_histogram(aes(px), binwidth=80)
@@ -64,12 +70,22 @@ ggplot(mixed) + geom_histogram(aes(py), binwidth=10)
 
 library(stats)
 library(mixtools) # https://www.jstatsoft.org/article/view/v032i06
-first_mu<-seq(26400,30600,by=268)
+first_mu<-seq(26668,30152,by=268)
 emed <- normalmixEM(mixed$px, lambda = .2, mu = c(-7000,-6000,-5000,-4000,-3000), sigma = 5)
 emed <- normalmixEM(mixed$px, lambda = .2, mu = c(-2500,-1400,-800,-400), sigma = c(5,3,2,2) )
 emed <- normalmixEM(mixed$py, lambda = 1/length(first_mu), mu = first_mu, sigma = 5, verb = TRUE, epsilon = 5e-2)
+emed_diffsigma <- normalmixEM(mixed$py, lambda = 1/length(first_mu), mu = first_mu, verb = TRUE, epsilon = 5e-2, sd.constr=rep(NA,length(first_mu)) )
+
 plot(emed, density = TRUE, cex.axis = 1.4, cex.lab = 1.5, cex.main = 1.5, breaks=100,
      main2 = "Membership Density of Avenues", xlab2 = "Rotated x-axis")
+# pretty good
+abline(v=first_mu, lwd=1, lty=2)
+
+
+plot(emed_diffsigma, density = TRUE, cex.axis = 1.4, cex.lab = 1.5, cex.main = 1.5, breaks=100,
+     main2 = "Membership Density of Avenues", xlab2 = "Rotated x-axis")
+# not reasonable
+
 
 emed[c("lambda", "mu", "sigma")]
 
@@ -78,10 +94,13 @@ emed$mu
 
 png("EDA/GAUSSIAN-means.png", width = 960, height=960)
 with(master %>% filter(px < -1600) %>% sample_n(100000), plot(px,py, pch=18, cex=.5,
-                                                              main = "Estimated Gaussian Means (after 986 iterations)"))
+                                                              main = "Estimated Gaussian Means (after 36 iterations)"))
 abline(h=emed$mu,col="red",lwd=2)
+dev.off()
 
-abline(h=first_mu, lwd=2, col="blue")
+abline(h=first_mu, lwd=3, col="blue", lty=2)
+
+emed$sigma
 
 # credit: http://stackoverflow.com/questions/25313578/any-suggestions-for-how-i-can-plot-mixem-type-data-using-ggplot2
 gg.mixEM <- function(EM, breaks=50, npoly = 500) {
