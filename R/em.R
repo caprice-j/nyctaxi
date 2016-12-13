@@ -57,10 +57,10 @@ ggplot(master %>% filter( 29750 < py & py < 30800 & -2500 < px & px < 0 ) ) + ge
 
 mixed <- master %>% filter( -8000 < px & px < -3000 & 26500 < py & py < 27000)
 mixed <- master %>% filter( 29750 < py & py < 30800 & -2500 < px & px < 0 )
-mixed <- master %>% filter( -2250 < px & px < -1600 & 26600 < py & py < 30250  )
+mixed <- master %>% filter( -2250 < px & px < -1500 & 26600 < py & py < 30250  )
 
-png('EDA/GAUSSIAN-area.png', height=1440, width=1440)
-ggplot(master2,aes(px,py)) + geom_point(size=.3, color="black", alpha=.9) + geom_point(data=mixed, color="blue", size=.1, alpha=.5)
+png('EDA/GAUSSIAN-overview.png', height=1440, width=1440)
+ggplot(master2,aes(px,py)) + geom_point(size=.1, color="black", alpha=.9) + annotate("rect",xmin=min(mixed$px), xmax=max(mixed$px), ymin=min(mixed$py), ymax=max(mixed$py), fill="skyblue", alpha=.5, color="black") #geom_point(data=mixed, color="blue", size=.05, alpha=.5)
 dev.off()
 
 ggplot(mixed) + geom_point(aes(px, py), size=.5)
@@ -98,7 +98,12 @@ with(master %>% filter(px < -1600) %>% sample_n(100000), plot(px,py, pch=18, cex
 abline(h=emed$mu,col="red",lwd=2)
 dev.off()
 
+png("EDA/GAUSSIAN-means-blue.png", width = 960, height=960)
+with(master %>% filter(px < -1600) %>% sample_n(100000), plot(px,py, pch=18, cex=.5,
+                                                              main = "Initial Values of 14 Gaussian Means"))
 abline(h=first_mu, lwd=3, col="blue", lty=2)
+dev.off()
+
 
 emed$sigma
 
@@ -145,7 +150,7 @@ png("EDA/avenue-membership.png", width=960, height = 480)
     gg.mixEM(emed, density = TRUE, breaks=200, bincolor = "gray60") + theme(legend.position="none")  + mytheme
 dev.off()
 
-png("EDA/avenue-membership.png", width=960, height = 480)
+png("EDA/avenue-membership-same.png", width=960, height = 480)
     gg.mixEM(emed, density = TRUE, breaks=200, bincolor = "gray60", cons=.1) + theme(legend.position="none")  + mytheme
 dev.off()
     
