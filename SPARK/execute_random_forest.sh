@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 
 EXE=spark-submit
+OPT=" --deploy-mode cluster "
 FILENAME=apply-random-forest.py
-NTREE=50
+NTREE=500
 TYPE1=before
 TYPE2=during
 TYPE3=finished

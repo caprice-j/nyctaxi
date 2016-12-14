@@ -30,8 +30,9 @@ from pyspark.mllib.linalg import DenseMatrix
 from pyspark.mllib.evaluation import BinaryClassificationMetrics
 from datetime import datetime
 
-sc = SparkContext("local", "randomforesttaxi")
-
+#sc = SparkContext("local[2]", "randomforesttaxi")
+#sc = SparkContext("spark://104.196.46.30:7077", "randomforesttaxi")
+sc = SparkContext("yarn", "randomforesttaxii")
 # In[2]:
 
 moment = sys.argv[1] # 'finished' # 'before' 'during'
@@ -45,8 +46,8 @@ print("nrfTree: " + str(nrfTree))
 
 print("moment: " + moment)
 #f = sc.textFile("file:///bgdt/yellow.2000000.csv") # file:// for local files (default hdfs)
-#f = sc.textFile("gs://dataproc-97276f09-d220-4be8-9ace-dae0bcad2c57-us/test/yellow.1605.csv") # file:// for local files (default hdfs)
-f = sc.textFile("gs://dataproc-97276f09-d220-4be8-9ace-dae0bcad2c57-us/test/yellow.20000.csv")
+f = sc.textFile("gs://dataproc-97276f09-d220-4be8-9ace-dae0bcad2c57-us/test/yellow.1605.csv") # file:// for local files (default hdfs)
+#f = sc.textFile("gs://dataproc-97276f09-d220-4be8-9ace-dae0bcad2c57-us/test/yellow.20000.csv")
 # 7575962 credit card trips
 #f = sc.textFile("file:///bgdt/yellow.50000.csv")
 #f = sc.textFile("file:///bgdt/yellow.csv")
