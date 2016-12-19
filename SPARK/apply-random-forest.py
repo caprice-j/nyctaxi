@@ -46,7 +46,8 @@ print("nrfTree: " + str(nrfTree))
 
 print("moment: " + moment)
 #f = sc.textFile("file:///bgdt/yellow.2000000.csv") # file:// for local files (default hdfs)
-f = sc.textFile("gs://dataproc-97276f09-d220-4be8-9ace-dae0bcad2c57-us/test/yellow.1605.csv") # file:// for local files (default hdfs)
+#f = sc.textFile("gs://dataproc-97276f09-d220-4be8-9ace-dae0bcad2c57-us/test/yellow.1605.csv") # file:// for local files (default hdfs)
+f = sc.textFile('gs://dataproc-97276f09-d220-4be8-9ace-dae0bcad2c57-us/test/yellow.2016.halfyear.csv')
 #f = sc.textFile("gs://dataproc-97276f09-d220-4be8-9ace-dae0bcad2c57-us/test/yellow.20000.csv")
 # 7575962 credit card trips
 #f = sc.textFile("file:///bgdt/yellow.50000.csv")
@@ -112,6 +113,7 @@ univ = f.filter(lambda x: x != header).map(lambda l: l.split(",")).map(lambda c:
       })\
 .filter(lambda x: x['$'] == '1' )\
 .filter(lambda x: x['len'] >= 2 and x['len'] <= 120 )\
+.filter(lambda x: x['fare'] > 0 )\
 .filter(lambda x:  40.4700 < x['pa'] and x['pa'] <  41.3100 and
                   -74.2700 < x['po'] and x['po'] < -71.7500 and
                    x['po'] != 0 and x['pa'] != 0 )\
@@ -183,7 +185,7 @@ if exemode == 'rf':
                                        ]))
     preped.take(1)
     
-    trRDD, vaRDD, teRDD = preped.randomSplit([6,2,2], seed=0L)
+    trRDD, vaRDD = preped.randomSplit([9,1], seed=0L)
     print("  training RDD:", trRDD.take(1))
     print("validation RDD:", vaRDD.map(lambda x: x.features ).take(1))
 
