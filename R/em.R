@@ -57,6 +57,7 @@ ggplot(master %>% filter( 29750 < py & py < 30800 & -2500 < px & px < 0 ) ) + ge
 
 mixed <- master %>% filter( -8000 < px & px < -3000 & 26500 < py & py < 27000)
 mixed <- master %>% filter( 29750 < py & py < 30800 & -2500 < px & px < 0 )
+mixed_well_separated<- master %>% filter( 26550 < py & py < 30250 & -5800 < px & px < -5200 )
 mixed <- master %>% filter( -2250 < px & px < -1500 & 26600 < py & py < 30250  )
 
 png('EDA/GAUSSIAN-overview.png', height=1440, width=1440)
@@ -73,6 +74,7 @@ library(mixtools) # https://www.jstatsoft.org/article/view/v032i06
 first_mu<-seq(26668,30152,by=268)
 emed <- normalmixEM(mixed$px, lambda = .2, mu = c(-7000,-6000,-5000,-4000,-3000), sigma = 5)
 emed <- normalmixEM(mixed$px, lambda = .2, mu = c(-2500,-1400,-800,-400), sigma = c(5,3,2,2) )
+emed_well_separated <- normalmixEM(mixed_well_separated$py, lambda = 1/length(first_mu), mu = first_mu, sigma = 5, verb = TRUE, epsilon = 5e-2)
 emed <- normalmixEM(mixed$py, lambda = 1/length(first_mu), mu = first_mu, sigma = 5, verb = TRUE, epsilon = 5e-2)
 emed_diffsigma <- normalmixEM(mixed$py, lambda = 1/length(first_mu), mu = first_mu, verb = TRUE, epsilon = 5e-2, sd.constr=rep(NA,length(first_mu)) )
 
@@ -93,9 +95,9 @@ plot(mixed$px, mixed$py)
 emed$mu
 
 png("EDA/GAUSSIAN-means.png", width = 960, height=960)
-with(master %>% filter(px < -1600) %>% sample_n(100000), plot(px,py, pch=18, cex=.5,
+with(master %>% filter(px < -1600) %>% sample_n(100000), plot(px,py, pch=18, cex=1,
                                                               main = "Estimated 14 Gaussian Means (after 36 iterations)"))
-abline(h=emed$mu,col="red",lwd=2)
+abline(h=emed$mu,col="red",lwd=3)
 dev.off()
 
 png("EDA/GAUSSIAN-means-blue.png", width = 960, height=960)
@@ -142,18 +144,43 @@ gg.mixEM <- function(EM, breaks=50, npoly = 500, density=TRUE, bincolor="gray80"
 
 mytheme <- scale_x_continuous(breaks=seq(26000,31000,by=200))
 
-png("EDA/avenue-membership-nodensity.png", width=960, height = 480)
+png("EDA/GAUSSIAN-avenue-membership-nodensity.png", width=960, height = 320)
     gg.mixEM(emed, density = FALSE, breaks=200, bincolor = "gray40") + mytheme
 dev.off()
 
-png("EDA/avenue-membership.png", width=960, height = 480)
+png("EDA/GAUSSIAN-avenue-membership.png", width=960, height = 320)
     gg.mixEM(emed, density = TRUE, breaks=200, bincolor = "gray60") + theme(legend.position="none")  + mytheme
 dev.off()
 
-png("EDA/avenue-membership-same.png", width=960, height = 480)
+png("EDA/GAUSSIAN-avenue-membership-same.png", width=960, height = 320)
     gg.mixEM(emed, density = TRUE, breaks=200, bincolor = "gray60", cons=.1) + theme(legend.position="none")  + mytheme
 dev.off()
     
+
+png("EDA/GAUSSIAN-well-membership-nodensity.png", width=960, height = 320)
+gg.mixEM(emed_well_separated, density = FALSE, breaks=200, bincolor = "gray40") + mytheme
+dev.off()
+
+png("EDA/GAUSSIAN-well-membership.png", width=960, height = 320)
+gg.mixEM(emed_well_separated, density = TRUE, breaks=200, bincolor = "gray60") + theme(legend.position="none")  + mytheme
+dev.off()
+
+png("EDA/GAUSSIAN-well-membership-same.png", width=960, height = 320)
+gg.mixEM(emed_well_separated, density = TRUE, breaks=200, bincolor = "gray60", cons=.1) + theme(legend.position="none")  + mytheme
+dev.off()
+
+
+png("EDA/GAUSSIAN-diff-membership-nodensity.png", width=960, height = 320)
+gg.mixEM(emed_diffsigma, density = FALSE, breaks=200, bincolor = "gray40") + mytheme
+dev.off()
+
+png("EDA/GAUSSIAN-diff-membership.png", width=960, height = 320)
+gg.mixEM(emed_diffsigma, density = TRUE, breaks=200, bincolor = "gray60") + theme(legend.position="none")  + mytheme
+dev.off()
+
+png("EDA/GAUSSIAN-diff-membership-same.png", width=960, height = 320)
+gg.mixEM(emed_diffsigma, density = TRUE, breaks=200, bincolor = "gray60", cons=.1) + theme(legend.position="none")  + mytheme
+dev.off()
 
 
 str(emed)
@@ -216,3 +243,64 @@ bivn
 
 pmat = persp(x=1:5,y=1:3,z=matrix(3:17,ncol=3), xlab="X", theta=-60, ylab="Y", zlab="Z", ticktype="detailed", zlim = c(-1, 15) )
 lines(trans3d(c(1,5), y=2:3, z= -1, pm = pmat), col = 3, lwd=4)
+
+
+
+
+
+gaussian_params <- bind_rows(
+    data.frame(lambda=0.011272, mu=8150.000000, sigma=185.539298),
+    data.frame(lambda=0.145615, mu=8230.000000, sigma=1029.423415),
+    data.frame(lambda=0.124117, mu=8310.000000, sigma=3231.427880),
+    data.frame(lambda=0.011550, mu=8390.000000, sigma=6027.728843),
+    data.frame(lambda=0.011215, mu=8470.000000, sigma=10532.436106),
+    data.frame(lambda=0.023994, mu=8550.000000, sigma=17714.305149),
+    data.frame(lambda=0.079880, mu=8630.000000, sigma=3824.382463),
+    data.frame(lambda=0.195180, mu=8710.000000, sigma=5363.908043),
+    data.frame(lambda=0.071077, mu=8790.000000, sigma=17541.390330),
+    data.frame(lambda=0.038122, mu=8870.000000, sigma=13660.073926),
+    data.frame(lambda=0.089617, mu=8950.000000, sigma=1815.763201),
+    data.frame(lambda=0.092370, mu=9030.000000, sigma=4029.656484),
+    data.frame(lambda=0.037928, mu=9110.000000, sigma=864.376077),
+    data.frame(lambda=0.068063, mu=9190.000000, sigma=419.833916)
+)
+    
+
+gaussian_params <- bind_rows(
+    data.frame(lambda=0.018486, mu=8150.000000, sigma=221.792704),
+    data.frame(lambda=0.116990, mu=8230.000000, sigma=819.869670),
+    data.frame(lambda=0.122727, mu=8310.000000, sigma=2880.261984),
+    data.frame(lambda=0.011777, mu=8390.000000, sigma=6414.157580),
+    data.frame(lambda=0.012808, mu=8470.000000, sigma=15003.945386),
+    data.frame(lambda=0.029430, mu=8550.000000, sigma=18068.980503),
+    data.frame(lambda=0.070685, mu=8630.000000, sigma=10101.291456),
+    data.frame(lambda=0.202362, mu=8710.000000, sigma=5287.882987),
+    data.frame(lambda=0.076006, mu=8790.000000, sigma=20573.492889),
+    data.frame(lambda=0.040758, mu=8870.000000, sigma=16394.046168),
+    data.frame(lambda=0.095228, mu=8950.000000, sigma=2232.774360),
+    data.frame(lambda=0.082019, mu=9030.000000, sigma=4461.613704),
+    data.frame(lambda=0.042136, mu=9110.000000, sigma=546.128168),
+    data.frame(lambda=0.078588, mu=9190.000000, sigma=430.476489)
+)
+
+
+
+
+
+
+gaussian_params <- bind_rows(
+    data.frame(lambda=0.029342, mu=8659.051171, sigma=20277.251631),
+    data.frame(lambda=0.032938, mu=8710.057950, sigma=18008.025764),
+    data.frame(lambda=0.048345, mu=8364.354041, sigma=1917.888006),
+    data.frame(lambda=0.035458, mu=8718.545013, sigma=16301.784332),
+    data.frame(lambda=0.028884, mu=8650.695532, sigma=19977.399309),
+    data.frame(lambda=0.031871, mu=8686.239044, sigma=20033.256599),
+    data.frame(lambda=0.086478, mu=8725.494146, sigma=7720.714435),
+    data.frame(lambda=0.033286, mu=8702.134938, sigma=18914.380704),
+    data.frame(lambda=0.184734, mu=8983.828383, sigma=3847.528636),
+    data.frame(lambda=0.119646, mu=9165.046448, sigma=1381.365598),
+    data.frame(lambda=0.034617, mu=8715.554854, sigma=17080.235850),
+    data.frame(lambda=0.036512, mu=8720.663584, sigma=15358.085736),
+    data.frame(lambda=0.069528, mu=8677.190084, sigma=1084.693684),
+    data.frame(lambda=0.228362, mu=8244.650064, sigma=2494.598312)
+)
